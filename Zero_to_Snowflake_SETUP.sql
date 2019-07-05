@@ -37,8 +37,8 @@ create or replace table weather (v variant, t timestamp);
 -- Create a reference to the S3 location where the  
 -- demo data resides.  
 create or replace stage citibike_s3_stage URL = 's3://sfc-citibike-demo/'  
-CREDENTIALS = (AWS_KEY_ID = 'AKIAYRUGFGYOCDRZW5V5'   
-               AWS_SECRET_KEY = '/DFN6EaNU8fQes9CO4jpsrEW7AF8vjJQWwmfQ/jg');  
+CREDENTIALS = (AWS_KEY_ID = '****************'   
+               AWS_SECRET_KEY = '****************************');  
   
 -- Create a compute cluster to load the data.  This cluster  
 -- will be 8 nodes, suspend automatically after 1 minute of inactivity and resume instantly when a new query or job comes in  
