@@ -11,7 +11,7 @@ pool:
 
 steps:
 - script: snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
-  displayName: 'Run a one-line script'
+  displayName: 'TestSnowsql'
 
 - script: |
     echo Add other tasks to build, test, and deploy your project.
