@@ -10,7 +10,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: ./snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
+- script: snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
   displayName: 'Run a one-line script'
 
 - script: |
