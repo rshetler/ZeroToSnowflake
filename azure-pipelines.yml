@@ -10,10 +10,16 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- script: /Applications/SnowSQL.app/contents/MacOS/snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
-  displayName: 'TestSnowsql'
+#- script: /Applications/SnowSQL.app/contents/MacOS/snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
+#  displayName: 'TestSnowsql'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- script: snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
+  workingDirectory: /Applications/SnowSQL.app/contents/MacOS
+  displayName: show stages
+  env:
+    aVarFromYaml: someValue
+
+#- script: |
+#   echo Add other tasks to build, test, and deploy your project.
+#    echo See https://aka.ms/yaml
+#  displayName: 'Run a multi-line script'
