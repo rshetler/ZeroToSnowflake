@@ -7,7 +7,7 @@ trigger:
 - master
 
 pool:
-  vmImage: 'ubuntu-latest'
+  'Snowflake_pool'
 
 steps:
 #- script: /Applications/SnowSQL.app/contents/MacOS/snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
