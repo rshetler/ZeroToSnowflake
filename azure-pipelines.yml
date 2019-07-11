@@ -13,11 +13,10 @@ steps:
 #- script: /Applications/SnowSQL.app/contents/MacOS/snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
 #  displayName: 'TestSnowsql'
 
-- script: snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"
-  workingDirectory: /Applications/SnowSQL.app/contents/MacOS
-  displayName: show stages
-  env:
-    aVarFromYaml: someValue
+- task: CmdLine@2
+  inputs:
+    script: 'snowsql -a va_demo32.us-east-1 -u rshetler -q "show stages;"'
+    workingDirectory: '/Applications/SnowSQL.app/contents/MacOS'
 
 #- script: |
 #   echo Add other tasks to build, test, and deploy your project.
