@@ -34,8 +34,8 @@ create or replace table TRIPS (
 -- store weather observations  
 create or replace table weather (v variant, t timestamp);  
   
--- Create a reference to the S3 location where the  
--- demo data resides.  
+-- Create a reference to the S3 location where the demo data resides. 
+-- ***TO DO*** Update the fields below with the key information found here: https://drive.google.com/file/d/1mmEfvKWdJgFTZW2ukGFjdnS4-j2hwuHW/view?usp=sharing
 create or replace stage citibike_s3_stage URL = 's3://sfc-citibike-demo/'  
 CREDENTIALS = (AWS_KEY_ID = '****************'   
                AWS_SECRET_KEY = '****************************');  
@@ -91,10 +91,4 @@ from trips
    where city_id = 5128638)  
   on date_trunc(HOUR, starttime) = date_trunc(HOUR, observation_time);  
     
--- Now create a warehouse that the Tableau   
--- workbook will use.    
-create or replace warehouse tableau_wh  
-    warehouse_size=medium   
-    auto_suspend = 5  
-    auto_resume = true  
-    initially_suspended=true ;  
+-- Once finished move to second worksheet 
