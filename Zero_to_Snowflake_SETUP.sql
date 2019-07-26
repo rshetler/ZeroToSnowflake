@@ -1,8 +1,11 @@
+----------------------------------------------------------------------------------
+-- Zero to Snowflake : Setup script
+----------------------------------------------------------------------------------
 use role sysadmin;  
   
 --Create a database that we'll use  
 -- to create the necessary tables & views  
-create database citibike_data;  
+create or replace database citibike_data;  
   
 -- Use the newly created database  
 use citibike_data.public;  
