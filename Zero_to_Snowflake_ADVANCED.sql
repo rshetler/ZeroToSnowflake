@@ -128,6 +128,87 @@ call grant_all_to_role('NEWROLE', 'CITIBIKE_DATA');
 show grants on database CITIBIKE_DATA;
 
 ----------------------------------------------------------------------------------
+-- Automate SQL using Tasks
+----------------------------------------------------------------------------------
+
+--Create table to store subset of trip data
+create or replace table SUBSET_TABLE (  
+    TRIPDURATION NUMBER(38,0),  
+    STARTTIME TIMESTAMP_NTZ(9),  
+    STOPTIME TIMESTAMP_NTZ(9),  
+    START_STATION_ID NUMBER(38,0),  
+    START_STATION_NAME VARCHAR(16777216),  
+    START_STATION_LATITUDE FLOAT,  
+    START_STATION_LONGITUDE FLOAT,  
+    END_STATION_ID NUMBER(38,0),  
+    END_STATION_NAME VARCHAR(16777216),  
+    END_STATION_LATITUDE FLOAT,  
+    END_STATION_LONGITUDE FLOAT,  
+    BIKEID NUMBER(38,0),  
+    NAME VARCHAR(16777216),  
+    USERTYPE VARCHAR(16777216),  
+    BIRTH_YEAR NUMBER(38,0),  
+    GENDER NUMBER(38,0)  
+); 
+
+--Create a table to store only trip duration and calculated age
+create or replace table TRIPDURATION_BY_AGE (  
+    TRIPDURATION NUMBER(38,0),  
+    AGE NUMBER(38,0) 
+); 
+
+
+--Insert a given set of data into the subset_table
+insert into SUBSET_TABLE (
+    select * from trips where starttime between '2014-07-28 24:00:00.000' and '2014-07-29 24:00:00.000' 
+  );
+
+
+--Create new role called 'taskadmin' which can be granted to users who are allowed to execute tasks in the account
+use role securityadmin;
+create role taskadmin;
+-- set the active role to ACCOUNTADMIN before granting the EXECUTE TASK privilege to the new role
+use role accountadmin;
+--Grant execute task priviledge to the new taskadmin role
+grant execute task on account to role taskadmin;
+-- set the active role to SECURITYADMIN to show that this role can grant a role to another role
+use role securityadmin;
+--Grant the new taskadmin role to the current SYSADMIN role we are using
+grant role taskadmin to role SYSADMIN;
+--Switch back to SYSADMIN role 
+use role sysadmin;
+
+-- create task to insert rows from the activity_raw stream into the transformation table
+    
+create task insert_into_tripdurationbyage
+  warehouse = query_wh
+  schedule = '1 minute' as
+  insert into TRIPDURATION_BY_AGE (
+    select
+        TRIPDURATION AS TRIP_DURATION,
+        2019 - BIRTH_YEAR  AS AGE
+    from subset_table
+    where BIRTH_YEAR is not null 
+);
+
+--View our task
+show tasks;
+
+--Allow the task to start
+alter task insert_into_tripdurationbyage resume;
+
+show tasks;
+
+--WAIT 1 MINUTE - Query to view data inserted into table
+select count(*) from TRIPDURATION_BY_AGE;
+select * from TRIPDURATION_BY_AGE order by age desc;
+
+--Set task to suspended
+alter task insert_into_tripdurationbyage suspend;
+show tasks;
+
+
+----------------------------------------------------------------------------------
 -- Streaming data ingestion with Snowpipe
 ----------------------------------------------------------------------------------
 

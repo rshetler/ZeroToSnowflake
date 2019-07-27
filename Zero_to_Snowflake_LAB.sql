@@ -45,10 +45,20 @@ from trips
    where city_id = 5128638)  
   on date_trunc(HOUR, starttime) = date_trunc(HOUR, observation_time);  
 
+--Query the view like a relational table 
 select tripduration, weather_desc from trip_weather_vw where weather_desc = 'sky is clear' order by tripduration desc;
 select tripduration, weather_desc from trip_weather_vw where weather_desc = 'light snow' order by tripduration desc;
 select tripduration, weather_desc from trip_weather_vw where weather_desc = 'heavy snow' order by tripduration desc;
 
+--Utiize window functions 
+select
+        AVG(TRIPDURATION) / 60 AS AVG_TRIP_DURATION_MINS,
+        2019 - BIRTH_YEAR  AS AGE,
+        COUNT(*) AS TOTAL
+    from trip_weather_vw
+    where BIRTH_YEAR is not null and BIRTH_YEAR > 1930
+    group by age
+    order by total desc; 
 
 ----------------------------------------------------------------------------------
 -- Time travel 
@@ -94,87 +104,29 @@ alter database citibike_data set data_retention_time_in_days = 30;
 show tables;
 
 
+----------------------------------------------------------------------------------
+-- Scale virtual warehouse 
+----------------------------------------------------------------------------------
+--Try a query with a large table scan 
+select * from trips where tripduration > 1000;
+
+--Change the size of the warehouse to service the large query
+alter warehouse query_wh set warehouse_size="XXLarge";
+
+select * from trips where tripduration > 1000;
+
+--Resize warehouse back down after query is finished
+alter warehouse query_wh set warehouse_size="SMALL";
 
 ----------------------------------------------------------------------------------
--- Automate SQL using Tasks
+-- Results Cache
 ----------------------------------------------------------------------------------
+--Run long running query
+alter warehouse query_wh set warehouse_size="XXLarge";
+select * from trips where tripduration > 2000;
 
---Create table to store subset of trip data
-create or replace table SUBSET_TABLE (  
-    TRIPDURATION NUMBER(38,0),  
-    STARTTIME TIMESTAMP_NTZ(9),  
-    STOPTIME TIMESTAMP_NTZ(9),  
-    START_STATION_ID NUMBER(38,0),  
-    START_STATION_NAME VARCHAR(16777216),  
-    START_STATION_LATITUDE FLOAT,  
-    START_STATION_LONGITUDE FLOAT,  
-    END_STATION_ID NUMBER(38,0),  
-    END_STATION_NAME VARCHAR(16777216),  
-    END_STATION_LATITUDE FLOAT,  
-    END_STATION_LONGITUDE FLOAT,  
-    BIKEID NUMBER(38,0),  
-    NAME VARCHAR(16777216),  
-    USERTYPE VARCHAR(16777216),  
-    BIRTH_YEAR NUMBER(38,0),  
-    GENDER NUMBER(38,0)  
-); 
-
---Create a table to store only trip duration and calculated age
-create or replace table TRIPDURATION_BY_AGE (  
-    TRIPDURATION NUMBER(38,0),  
-    AGE NUMBER(38,0) 
-); 
-
-
---Insert a given set of data into the subset_table
-insert into SUBSET_TABLE (
-    select * from trips where starttime between '2014-07-28 24:00:00.000' and '2014-07-29 24:00:00.000' 
-  );
-
-
---Create new role called 'taskadmin' which can be granted to users who are allowed to execute tasks in the account
-use role securityadmin;
-create role taskadmin;
--- set the active role to ACCOUNTADMIN before granting the EXECUTE TASK privilege to the new role
-use role accountadmin;
---Grant execute task priviledge to the new taskadmin role
-grant execute task on account to role taskadmin;
--- set the active role to SECURITYADMIN to show that this role can grant a role to another role
-use role securityadmin;
---Grant the new taskadmin role to the current SYSADMIN role we are using
-grant role taskadmin to role SYSADMIN;
---Switch back to SYSADMIN role 
-use role sysadmin;
-
--- create task to insert rows from the activity_raw stream into the transformation table
-    
-create task insert_into_tripdurationbyage
-  warehouse = query_wh
-  schedule = '1 minute' as
-  insert into TRIPDURATION_BY_AGE (
-    select
-        TRIPDURATION AS TRIP_DURATION,
-        2019 - BIRTH_YEAR  AS AGE
-    from subset_table
-    where BIRTH_YEAR is not null 
-);
-
---View our task
-show tasks;
-
---Allow the task to start
-alter task insert_into_tripdurationbyage resume;
-
-show tasks;
-
---WAIT 1 MINUTE - Query to view data inserted into table
-select count(*) from TRIPDURATION_BY_AGE;
-select * from TRIPDURATION_BY_AGE order by age desc;
-
---Set task to suspended
-alter task insert_into_tripdurationbyage suspend;
-show tasks;
-
+--Rerun same query - view history
+select * from trips where tripduration > 2000;
 
 ----------------------------------------------------------------------------------
 -- External Tables
