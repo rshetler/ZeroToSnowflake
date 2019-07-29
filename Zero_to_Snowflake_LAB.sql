@@ -18,8 +18,34 @@ create or replace warehouse query_wh
 use warehouse query_wh;
 
 ----------------------------------------------------------------------------------
--- Handle semi-structured data like relational data with view
+-- Handle semi-structured data like relational data with a view
 ----------------------------------------------------------------------------------
+
+--Query weather info related to Rochester
+select   
+    t as observation_time
+    ,v:city.name::string as city_name  
+    ,v:city.country::string as country  
+    ,(v:main.temp::float)-214.84 as temp_avg  
+    ,(v:main.temp_min::float)-214.84 as temp_min  
+    ,(v:main.temp_max::float)-214.84 as temp_max    
+    ,v:weather[0].main::string as weather  
+    ,v:weather[0].description::string as weather_desc  
+    ,v:wind.deg::float as wind_dir  
+    ,v:wind.speed::float as wind_speed  
+   from weather  
+   where city_name like 'Rochester'
+   order by temp_avg desc;
+
+--Query occurances of a weather type
+select 
+    v:weather[0].main::string as WEATHER, 
+    count(*) as WEATHER_COUNT
+    from weather
+    where v:city.name::string like 'Rochester'
+    group by weather
+    order by WEATHER_COUNT desc;
+
 -- create a view that joins the information about a specific trip to the weather info  
 create or replace  view trip_weather_vw as  
 select *  
