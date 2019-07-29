@@ -133,11 +133,10 @@ show tables;
 -- Results Cache
 ----------------------------------------------------------------------------------
 --Run long running query
-alter warehouse query_wh set warehouse_size="XXLarge";
-select * from trips where tripduration > 2000;
+select * from trips where tripduration > 1200;
 
 --Rerun same query - view history
-select * from trips where tripduration > 2000;
+select * from trips where tripduration > 1200;
 
 ----------------------------------------------------------------------------------
 -- Scale virtual warehouse 
