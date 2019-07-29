@@ -129,6 +129,15 @@ show tables;
 alter database citibike_data set data_retention_time_in_days = 30;
 show tables;
 
+----------------------------------------------------------------------------------
+-- Results Cache
+----------------------------------------------------------------------------------
+--Run long running query
+alter warehouse query_wh set warehouse_size="XXLarge";
+select * from trips where tripduration > 2000;
+
+--Rerun same query - view history
+select * from trips where tripduration > 2000;
 
 ----------------------------------------------------------------------------------
 -- Scale virtual warehouse 
@@ -142,17 +151,7 @@ alter warehouse query_wh set warehouse_size="XXLarge";
 select * from trips where tripduration > 1000;
 
 --Resize warehouse back down after query is finished
-alter warehouse query_wh set warehouse_size="SMALL";
-
-----------------------------------------------------------------------------------
--- Results Cache
-----------------------------------------------------------------------------------
---Run long running query
-alter warehouse query_wh set warehouse_size="XXLarge";
-select * from trips where tripduration > 2000;
-
---Rerun same query - view history
-select * from trips where tripduration > 2000;
+alter warehouse query_wh set warehouse_size="LARGE";
 
 ----------------------------------------------------------------------------------
 -- External Tables
