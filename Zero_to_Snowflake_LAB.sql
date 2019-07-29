@@ -142,6 +142,12 @@ select * from trips where tripduration > 2000;
 ----------------------------------------------------------------------------------
 -- Scale virtual warehouse 
 ----------------------------------------------------------------------------------
+--Turn results caching off for our current session
+alter session set use_cached_result = false;
+
+--Start with a XS warehouse - a single node cluster 
+alter warehouse query_wh set warehouse_size="XSMALL";
+
 --Try a query with a large table scan 
 select * from trips where tripduration > 1000;
 
@@ -152,6 +158,9 @@ select * from trips where tripduration > 1000;
 
 --Resize warehouse back down after query is finished
 alter warehouse query_wh set warehouse_size="LARGE";
+
+--Turn results caching back on 
+alter session set use_cached_result = true;
 
 ----------------------------------------------------------------------------------
 -- External Tables
