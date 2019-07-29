@@ -43,6 +43,10 @@ create or replace stage citibike_s3_stage URL = 's3://sfc-citibike-demo/'
 CREDENTIALS = (AWS_KEY_ID = '****************'   
                AWS_SECRET_KEY = '****************************');  
   
+
+--List contents of stage
+list @citibike_s3_stage;
+
 -- Create a compute cluster to load the data.  This cluster  
 -- will be 8 nodes, suspend automatically after 1 minute of inactivity and resume instantly when a new query or job comes in  
 create or replace warehouse load_wh   
