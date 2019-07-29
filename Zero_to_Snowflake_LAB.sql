@@ -212,9 +212,6 @@ select sum(l_quantity) as  SUM_QUANTITY,
 alter table ext_sales_data add column L_REGION INTEGER as to_number(substr(metadata$filename, 32,1));
 alter table ext_sales_data add column L_DIVISION integer as to_number(substr(metadata$filename, 34,1));
 
---Refresh external table after new rows are added
-alter external table if exists ext_sales_data refresh;
-
 --Run query with further pruning
 select sum(l_quantity) as  SUM_QUANTITY,
     avg(l_discount) as AVG_DISCOUNT
