@@ -72,4 +72,6 @@ from (select $1, convert_timezone('UTC', 'US/Eastern', $1:time::timestamp_ntz)
 -- Suspend the cluster you just created   
 alter warehouse load_wh suspend;   
     
+-- Data loading through UI - TRIPS table
+
 -- Once finished move to second worksheet 
