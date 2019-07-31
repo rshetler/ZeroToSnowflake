@@ -1,4 +1,14 @@
 ----------------------------------------------------------------------------------
+-- Zero to Snowflake Advanced Concepts 
+----------------------------------------------------------------------------------
+--Setup worksheet context
+use role accountadmin; 
+use citibike_data.public;
+use warehouse query_wh;
+
+
+
+----------------------------------------------------------------------------------
 -- Stored Proceedures 
 ----------------------------------------------------------------------------------
 --Create table to store Float values
@@ -74,7 +84,7 @@ select count(*) from trips;
 
 --Stored proceedure to create roles - returns false if role already exists
 create or replace procedure create_role(ROLENAME String)
-    returns boolean
+    returns string
     language javascript
     strict
     as
@@ -87,7 +97,7 @@ create or replace procedure create_role(ROLENAME String)
             return true;   // Return a success/error indicator.
             }
         catch (err)  {
-            return false;   // Return a success/error indicator.
+            return err;   // Return a success/error indicator.
             }
     $$
     ;
@@ -120,7 +130,7 @@ create or replace procedure grant_all_to_role(ROLENAME String, DBNAME String)
 call grant_all_to_role('NEWROLETEST', 'CITIBIKE_DATA');
 
 --Try with errors
-call grant_all_to_role('NEWROLETEST', 'CITIBIKE');
+call grant_all_to_role('NEWROLTEST', 'CITIBIE');
 call grant_all_to_role('NEWROLE', 'CITIBIKE_DATA');
 
 
@@ -176,7 +186,7 @@ use role securityadmin;
 --Grant the new taskadmin role to the current SYSADMIN role we are using
 grant role taskadmin to role SYSADMIN;
 --Switch back to SYSADMIN role 
-use role sysadmin;
+use role ACCOUNTADMIN;
 
 -- create task to insert rows from the activity_raw stream into the transformation table
     
@@ -248,11 +258,8 @@ az group create --name snowpipe --location eastus
 az provider register --namespace Microsoft.EventGrid
 az provider show --namespace Microsoft.EventGrid --query "registrationState" -- CHECK UNTIL "Registered" status
 az storage account create --resource-group snowpipe --name sfcsnowpipe --sku Standard_LRS --location eastus --kind BlobStorage --access-tier Hot
-az storage account create --resource-group snowpipe --name sfcstoragequeue --sku Standard_LRS --location eastus --kind StorageV2
-
-az storage queue create --name sfcstoragequeue --account-name sfcsnowpipe
-broken 
-
+az storage account create --resource-group snowpipe --name sfcstoragequeueaccount --sku Standard_LRS --location eastus --kind StorageV2
+az storage queue create --name sfcstoragequeue --account-name sfcstoragequeueaccount
 */
 
 ----------------------------------------------------------------------------------
