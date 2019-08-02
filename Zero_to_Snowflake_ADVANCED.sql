@@ -232,7 +232,24 @@ list @snowpipe_stage;
 
 --Create a table to load data into from snowpipe
 --Create table to hold relational data
-CREATE or REPLACE TABLE citibike_data.public.snowpipetable ("C1" STRING, "C2" STRING, "C3" STRING, "C4" STRING, "C5" STRING, "C6" STRING, "C7" STRING);
+CREATE or REPLACE TABLE citibike_data.public.snowpipetable (  
+    TRIPDURATION NUMBER(38,0),  
+    STARTTIME TIMESTAMP_NTZ(9),  
+    STOPTIME TIMESTAMP_NTZ(9),  
+    START_STATION_ID NUMBER(38,0),  
+    START_STATION_NAME VARCHAR(16777216),  
+    START_STATION_LATITUDE FLOAT,  
+    START_STATION_LONGITUDE FLOAT,  
+    END_STATION_ID NUMBER(38,0),  
+    END_STATION_NAME VARCHAR(16777216),  
+    END_STATION_LATITUDE FLOAT,  
+    END_STATION_LONGITUDE FLOAT,  
+    BIKEID NUMBER(38,0),  
+    NAME VARCHAR(16777216),  
+    USERTYPE VARCHAR(16777216),  
+    BIRTH_YEAR NUMBER(38,0),  
+    GENDER NUMBER(38,0)  
+);  
 
 --Create the snowpipe definition, using a COPY INTO statement from the external stage
 create pipe snowpipe_demo auto_ingest=true as
@@ -254,12 +271,71 @@ truncate table citibike_data.public.snowpipetable;
  
 /* Azure Steps:
 Open Azure CLI or Shell
-az group create --name snowpipe --location eastus
+Alter variable names in place of the <text> below and paste the code between the lines into the Azure CLI: 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+resourceGroup=<snowpipe>
+location=<eastus>
+dataStorageAccount=<sfcsnowpipe>
+queueStorageAccount=<sfcstoragequeueaccount>
+queueName=<sfcstoragequeue>
+eventGridName=<eventgridsnowpipe>
+
+az group create --name $resourceGroup --location $location
 az provider register --namespace Microsoft.EventGrid
-az provider show --namespace Microsoft.EventGrid --query "registrationState" -- CHECK UNTIL "Registered" status
-az storage account create --resource-group snowpipe --name sfcsnowpipe --sku Standard_LRS --location eastus --kind BlobStorage --access-tier Hot
-az storage account create --resource-group snowpipe --name sfcstoragequeueaccount --sku Standard_LRS --location eastus --kind StorageV2
-az storage queue create --name sfcstoragequeue --account-name sfcstoragequeueaccount
+sleep 30
+az provider show --namespace Microsoft.EventGrid --query "registrationState" 
+
+az storage account create --resource-group $resourceGroup --name $dataStorageAccount --sku Standard_LRS --location eastus --kind BlobStorage --access-tier Hot
+az storage account create --resource-group $resourceGroup --name $queueStorageAccount --sku Standard_LRS --location eastus --kind StorageV2
+az storage queue create --name $queueName --account-name $queueStorageAccount
+
+export storageid=$(az storage account show --name $dataStorageAccount --resource-group $resourceGroup --query id --output tsv)
+export queuestorageid=$(az storage account show --name $queueStorageAccount --resource-group $resourceGroup --query id --output tsv)
+export queueid="$queuestorageid/queueservices/default/queues/$queueName"
+
+az extension add --name eventgrid
+az eventgrid event-subscription create --source-resource-id $storageid --name $eventGridName --endpoint-type storagequeue --endpoint $queueid
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Inside the Azure portal: 
+
+Navigate to the Queue Storage Account created - make note of the Queue URL 
+EX. https://sfcstoragequeueaccount.queue.core.windows.net/sfcstoragequeue
+
+Navigate to Azure Active Directory -> Properties - make note of the tenant ID
+EX. 1*****f3-eb**-4*ef-9**2-ba22*****da
+
+From your AZ snowflake account:
+
+create or replace notification integration azsnowpipe
+  enabled = true
+  type = queue
+  notification_provider = azure_storage_queue
+  azure_storage_queue_primary_uri = '<QUEUE STORAGE URL>'
+  azure_tenant_id = '<AZURE TENANT ID>'; 
+
+describe notification integration azsnowpipe;
+-- Click the "AZURE CONSENT URL", copy it, paste into a browser, login and select "Accept"
+
+create or replace stage az_snowpipe_stage
+  url = 'azure://<AZURE BLOB LOCATION>/'
+  credentials = (azure_sas_token='****************************');
+
+Prior to creating the actual pipe follow instructions for "Granting Snowflake Access to the Storage Queue" here:
+https://docs.snowflake.net/manuals/user-guide/data-load-snowpipe-auto-azure.html#granting-snowflake-access-to-the-storage-queue
+
+Afterwards go back into your snowflake and complete the following: 
+
+  create or replace pipe az_pipe
+  auto_ingest = true
+  integration = 'AZSNOWPIPE'
+  as
+  copy into snowpipetable
+  from @demo_db.public.az_snowpipe_stage
+  file_format = (type = 'CSV');
+
+  Check status of pipe:
+  select SYSTEM$PIPE_STATUS( 'az_pipe' );
 */
 
 ----------------------------------------------------------------------------------
@@ -271,7 +347,6 @@ CREATE TABLE citibike_data.public.testtable ("C1" STRING, "C2" STRING, "C3" STRI
 
 --Create table to hold semi-structured data
 CREATE TABLE citibike_data.public.testjson ("CATEGORY" VARIANT);
-
 
 --Create internal Snowflake Managed stage
 CREATE STAGE citibike_data.public.internalstage;
